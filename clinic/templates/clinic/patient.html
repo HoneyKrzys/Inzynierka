@@ -1,0 +1,119 @@
+{% extends 'clinic/base.html' %}
+{% block actions %}
+    <div class="actions">
+        <a class="button outline" href="{% url 'patient_edit' patient.pk %}">Edytuj dane</a>
+        <a class="button"
+           href="{% url 'visit_start' %}?patient={{ patient.pk }}">＋ Rozpocznij wizytę</a>
+    </div>
+{% endblock %}
+{% block content %}
+    {% include 'clinic/attachments.html' with attachments=attachments %}
+    <div class="split">
+        <section class="card">
+            <p class="eyebrow">DANE PACJENTA</p>
+            <h2>{{ patient }}</h2>
+            <dl>
+                <dt>Drugie imię</dt>
+                <dd>{{ patient.second_name|default:'Nie podano' }}</dd>
+                <dt>Data urodzenia</dt>
+                <dd>
+                    {{ patient.birth_date|date:'d.m.Y' }}
+                </dd>
+                <dt>PESEL</dt>
+                <dd>
+                    {{ patient.pesel|default:"Nie podano" }}
+                </dd>
+                <dt>Płeć</dt>
+                <dd>
+                    {{ patient.get_sex_display }}
+                </dd>
+                <dt>Telefon</dt>
+                <dd>
+                    {{ patient.phone|default:'Nie podano' }}
+                </dd>
+                <dt>E-mail</dt>
+                <dd>
+                    {{ patient.email|default:'Nie podano' }}
+                </dd>
+                <dt>Adres</dt>
+                <dd>
+                    {{ patient.address|default:'Nie podano' }}
+                </dd>
+            </dl>
+            <a href="{% url 'document_new' %}?patient={{ patient.pk }}">Wystaw dokument →</a>
+        </section>
+        <section class="card">
+            <p class="eyebrow">OSTATNIA ZATWIERDZONA WIZYTA</p>
+            {% if latest %}
+                <h2>{{ latest.created|date:'d.m.Y' }}</h2>
+                <h4>Alergie</h4>
+                <p class="pre">{{ latest.allergies|default:'Nie ustalono' }}</p>
+                <h4>Leki</h4>
+                <p class="pre">{{ latest.medication|default:'Nie ustalono' }}</p>
+                <h4>Choroby przewlekłe / wywiad</h4>
+                <p class="pre">{{ latest.history|default:'Nie ustalono' }}</p>
+                <small class="muted">Dane historyczne — wymagają potwierdzenia podczas kolejnej wizyty.</small>
+            {% else %}
+                <div class="empty">Brak zakończonych wizyt.</div>
+            {% endif %}
+        </section>
+    </div>
+    <section class="card">
+        <h2>Historia wywiadów i badań</h2>
+        {% for visit in visits %}
+            <div class="history-item">
+                <div class="section-heading">
+                    <h3>{{ visit.created|date:'d.m.Y · H:i' }}</h3>
+                    <span class="badge {{ visit.status }}">{{ visit.get_status_display }}</span>
+                </div>
+                <p>{{ visit.complaint|default:'Wywiad w trakcie uzupełniania'|truncatechars:160 }}</p>
+                {% if visit.results %}
+                    <details>
+                        <summary>Wyniki badań z tej wizyty</summary>
+                        <p class="pre">{{ visit.results }}</p>
+                    </details>
+                {% endif %}
+                <a href="{% url 'visit' visit.pk %}">Otwórz wizytę →</a>
+            </div>
+        {% empty %}
+            <p class="empty">Historia pojawi się po rozpoczęciu pierwszej wizyty.</p>
+        {% endfor %}
+    </section>
+    <section class="card" id="wyniki-badan">
+        <h2>Wyniki badań</h2>
+        <form method="post"
+              enctype="multipart/form-data"
+              action="{% url 'patient' patient.pk %}#wyniki-badan">
+            {% csrf_token %}
+            {{ result_form.as_p }}
+            <button class="button" type="submit" data-busy="Wgrywanie…">Dodaj wynik badania</button>
+        </form>
+        {% for result in test_results %}
+            <a class="list-row" href="{% url 'patient_result_download' result.pk %}">
+                <span>
+                    {{ result.name }}
+                    <small>{{ result.created|date:'d.m.Y H:i' }}</small>
+                </span>
+                <span>Pobierz PDF →</span>
+            </a>
+        {% empty %}
+            <p class="muted">Nie dodano jeszcze wyników badań.</p>
+        {% endfor %}
+    </section>
+    <section class="card">
+        <h2>Dokumenty pacjenta</h2>
+        {% for doc in documents %}
+            <a class="list-row" href="{% url 'document' doc.pk %}">
+                <span>
+                    {{ doc.get_kind_display }}
+                    ·
+                    {{ doc.title }}
+                    <small>{{ doc.created|date:'d.m.Y H:i' }}</small>
+                </span>
+                <span>Otwórz →</span>
+            </a>
+        {% empty %}
+            <p class="empty">Nie wystawiono dokumentów.</p>
+        {% endfor %}
+    </section>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'clinic/public.html' %}
+{% block public_content %}
+    <div class="auth-grid">
+        <div>
+            <p class="eyebrow">PRZESTRZEŃ LEKARZA</p>
+            <h1>
+                Witaj
+                <br>
+                <em>z powrotem.</em>
+            </h1>
+            <p class="muted">
+                Harmonogram, dokumentacja i wsparcie AI.
+                <br>
+                Wszystko w Twoim gabinecie.
+            </p>
+        </div>
+        <section class="card auth-card">
+            <h2>Zaloguj się</h2>
+            <p class="muted">Użyj konta lekarza.</p>
+            <form method="post">
+                {% csrf_token %}
+                {% include 'clinic/fields.html' %}
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+                <button class="button full">Przejdź do gabinetu →</button>
+            </form>
+        </section>
+    </div>
+{% endblock %}

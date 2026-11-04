@@ -1,0 +1,136 @@
+{% extends 'clinic/public.html' %}
+{% block public_content %}
+    <section class="hero">
+        <div>
+            <span class="pill">TWÓJ TERMIN, BEZ TELEFONOWANIA</span>
+            <h1>
+                Dobra opieka
+                <br>
+                zaczyna się od
+                <br>
+                <em>rozmowy.</em>
+            </h1>
+            <p>
+                Wybierz dogodny termin wizyty u internisty.
+                <br>
+                Rezerwacja zajmie chwilę — bez zakładania konta.
+            </p>
+            <div class="hero-features">
+                <span>01 / Wybierz termin</span>
+                <span>02 / Podaj dane</span>
+                <span>03 / Gotowe</span>
+            </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="art-cross">+</div>
+            <div class="art-note">
+                <span class="status-dot"></span>
+                Miejsce na Twoje zdrowie
+            </div>
+        </div>
+    </section>
+    <section class="booking-section" id="terminy">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">UMÓW WIZYTĘ</p>
+                <h2>Znajdź czas dla siebie.</h2>
+            </div>
+            <span class="pill soft">Rezerwacja bez konta</span>
+        </div>
+        <div class="booking-grid">
+            <aside class="doctor-card">
+                <div class="doctor-avatar">+</div>
+                <h3>
+                    {% if selected %}
+                        {{ selected.get_full_name|default:selected.username }}
+                    {% else %}
+                        Gabinet internistyczny
+                    {% endif %}
+                </h3>
+                <p>Choroby wewnętrzne</p>
+                <hr>
+                <p>Konsultacja w gabinecie</p>
+                <small>Wybierz wolną godzinę. Po rezerwacji otrzymasz prywatny link do jej odwołania.</small>
+            </aside>
+            <div class="card calendar-card">
+                <form method="get" class="filters">
+                    <label>
+                        Lekarz
+                        <select name="doctor">
+                            {% for doctor in doctors %}
+                                <option value="{{ doctor.pk }}"
+                                        {% if doctor == selected %}selected{% endif %}>
+                                    {{ doctor.get_full_name|default:doctor.username }}
+                                </option>
+                            {% empty %}
+                                <option value="">Brak opublikowanych grafików lekarzy</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label>
+                        Dzień
+                        <input type="date" name="day" value="{{ day|date:'Y-m-d' }}">
+                    </label>
+                    <button class="button outline">Pokaż terminy</button>
+                </form>
+                <nav class="calendar-navigation" aria-label="Zmiana daty">
+                    {% if previous_day %}
+                        <a class="button outline"
+                           aria-label="Poprzedni dzień"
+                           href="?doctor={{ selected.pk }}&day={{ previous_day|date:'Y-m-d' }}#terminy">
+                            ← Poprzedni dzień
+                        </a>
+                    {% else %}
+                        <span class="button outline" aria-disabled="true">← Poprzedni dzień</span>
+                    {% endif %}
+                    {% if next_day %}
+                        <a class="button outline"
+                           aria-label="Następny dzień"
+                           href="?doctor={{ selected.pk }}&day={{ next_day|date:'Y-m-d' }}#terminy">
+                            Następny dzień →
+                        </a>
+                    {% endif %}
+                </nav>
+                <div class="day-strip">
+                    {% for date in days %}
+                        <a class="day {% if date == day %}selected{% endif %}"
+                           href="?doctor={{ selected.pk }}&day={{ date|date:'Y-m-d' }}#terminy">
+                            <span>{{ date|date:'D' }}</span>
+                            <strong>{{ date|date:'d' }}</strong>
+                            <small>{{ date|date:'M' }}</small>
+                        </a>
+                    {% endfor %}
+                </div>
+                <h3>{{ day|date:'l, j F Y' }}</h3>
+                <p class="muted small">Dostępne godziny rozpoczęcia wizyty</p>
+                <div class="slots">
+                    {% for slot in slots %}
+                        <a class="slot" href="{% url 'booking' slot.pk %}">
+                            {{ slot.starts|date:'H:i' }}
+                            <span>↗</span>
+                        </a>
+                    {% empty %}
+                        <div class="empty">
+                            <strong>Brak wolnych godzin tego dnia</strong>
+                            <p>
+                                {% if upcoming %}
+                                    Wybierz inną datę.
+                                    Najbliższy termin:
+                                    <a href="?doctor={{ selected.pk }}&day={{ upcoming.starts|date:'Y-m-d' }}#terminy">
+                                        {{ upcoming.starts|date:'d.m, H:i' }}
+                                    </a>
+                                    .
+                                {% else %}
+                                    Lekarz nie ma obecnie opublikowanych przyszłych wolnych terminów.
+                                    Skontaktuj się z gabinetem, aby ustalić dostępność.
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

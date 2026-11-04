@@ -1,0 +1,47 @@
+{% extends 'clinic/base.html' %}
+{% block actions %}
+    {% if not source.czy_pomocniczy %}
+    <form method="post">
+        {% csrf_token %}
+        <button class="button {% if source.approved %}outline{% endif %}">
+            {% if source.approved %}
+                Wycofaj z wyszukiwania
+            {% else %}
+                Zatwierdź do wyszukiwania
+            {% endif %}
+        </button>
+    </form>
+    {% endif %}
+{% endblock %}
+{% block content %}
+    <section class="card">
+        <h2>Zakres materiału</h2>
+        {% if source.czy_pomocniczy %}
+        <p>To materiał pomocniczy: bibliografia, indeks, odpowiedzi lub strony wstępne. Jest zachowany w bibliotece, ale nie służy do generowania zaleceń dla pacjenta.</p>
+        {% else %}
+        <p>
+            Nieokreślony lub niepasujący zakres blokuje generowanie zaleceń. Nowe dziedziny wymagają rozszerzenia obsługiwanych zakresów — nie przypisuj ich do przypadkowej kategorii.
+        </p>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {{ scope_form.as_p }}
+            <button class="button" name="action" value="scope">Zapisz zakres</button>
+        </form>
+    </section>
+    <div class="notice">
+        To tekst wyodrębniony dla AI, a nie podgląd oryginalnego PDF. Układ kolumn, tabel i ilustracji nie jest zachowany. Sprawdź zgodność tekstu z oryginałem, zwłaszcza liczby, jednostki i tabele. Numery stron odnoszą się do stron pliku PDF; dla TXT używamy strony 1.
+    </div>
+    {% for chunk in chunks %}
+        <section class="card">
+            <p class="eyebrow">
+                FRAGMENT
+                {{ chunk.pk }}
+                / STRONA
+                {{ chunk.page }}
+            </p>
+            <p>{{ chunk.text }}</p>
+        </section>
+    {% endfor %}
+    {% include 'clinic/pagination.html' with items=chunks %}
+{% endblock %}

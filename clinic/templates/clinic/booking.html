@@ -1,0 +1,36 @@
+{% extends 'clinic/public.html' %}
+{% block public_content %}
+    <div class="narrow">
+        <a class="back"
+           href="{% url 'home' %}?doctor={{ slot.doctor_id }}&day={{ slot.starts|date:'Y-m-d' }}#terminy">
+            ← Wybierz inny termin
+        </a>
+        <p class="eyebrow">REZERWACJA WIZYTY</p>
+        <h1>
+            Jeszcze tylko
+            <br>
+            <em>kilka informacji.</em>
+        </h1>
+        <div class="notice">
+            <strong>
+                {{ slot.starts|date:'l, j F Y' }}
+                ·
+                {{ slot.starts|date:'H:i' }}
+                –
+                {{ slot.ends|date:'H:i' }}
+            </strong>
+            <br>
+            {{ slot.doctor.get_full_name|default:slot.doctor.username }}
+        </div>
+        <section class="card">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% include 'clinic/fields.html' %}
+                <p class="muted small">
+                    W polach kontaktowych nie wpisuj informacji o stanie zdrowia. Po rezerwacji zapisz prywatny link — nie wysyłamy e-maili ani SMS.
+                </p>
+                <button class="button full">Zarezerwuj termin →</button>
+            </form>
+        </section>
+    </div>
+{% endblock %}

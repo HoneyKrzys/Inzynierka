@@ -1,0 +1,31 @@
+{% extends 'clinic/public.html' %}
+{% block public_content %}
+    <section class="narrow card confirmation">
+        <div class="success-icon">✓</div>
+        <p class="eyebrow">TWOJA REZERWACJA</p>
+        <h1>
+            {% if appointment.status == 'odwolana' %}
+                Termin odwołany.
+            {% else %}
+                Termin zapisany.
+            {% endif %}
+        </h1>
+        <p>
+            {{ appointment.slot.starts|date:'l, j F Y' }}
+            ·
+            <strong>{{ appointment.slot.starts|date:'H:i' }}</strong>
+        </p>
+        <span class="badge {{ appointment.status }}">{{ appointment.get_status_display }}</span>
+        <p>
+            Zapisz adres tej strony. To prywatny link do obsługi rezerwacji — nie udostępniaj go innym osobom.
+        </p>
+        <p class="muted small">Nie wysyłamy powiadomień e-mail ani SMS w tej wersji.</p>
+        {% if appointment.status == 'zaplanowana' %}
+            <form method="post" data-confirm="Czy odwołać tę rezerwację?">
+                {% csrf_token %}
+                <button class="button outline danger">Odwołaj rezerwację</button>
+            </form>
+        {% endif %}
+        <a class="back" href="{% url 'home' %}">Powrót do strony głównej →</a>
+    </section>
+{% endblock %}

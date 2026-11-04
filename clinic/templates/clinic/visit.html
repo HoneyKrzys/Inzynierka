@@ -1,0 +1,252 @@
+{% extends 'clinic/base.html' %}
+{% block actions %}
+    <div class="actions">
+        <a class="button outline" href="{% url 'patient' visit.patient_id %}">Karta pacjenta</a>
+        <a class="button outline"
+           href="{% url 'document_new' %}?patient={{ visit.patient_id }}&visit={{ visit.pk }}">
+            Wystaw dokument
+        </a>
+        {% if visit.status == 'zakonczona' %}
+            <a class="button" href="{% url 'visit_pdf' visit.pk %}">Pobierz PDF ↓</a>
+        {% else %}
+            <button class="button" type="submit" form="visit-form" name="action" value="complete"
+                    data-confirm-button="Zatwierdzić i zakończyć wizytę? Dokumentacji nie będzie można edytować.">Zakończ</button>
+        {% endif %}
+    </div>
+{% endblock %}
+{% block content %}
+    {% include 'clinic/attachments.html' with attachments=visit.appointment.attachments.all %}
+    <div class="visit-banner">
+        <span>
+            <strong>{{ visit.patient }}</strong>
+            ·
+            {{ visit.patient.birth_date|date:'d.m.Y' }}
+            ·
+            {{ visit.created|date:'d.m.Y H:i' }}
+        </span>
+        <span class="badge {{ visit.status }}">{{ visit.get_status_display }}</span>
+    </div>
+    {% if visit.status == 'zakonczona' %}
+        <div class="notice success">
+            Dokumentacja zatwierdzona
+            {{ visit.completed_at|date:'d.m.Y H:i' }}
+            . Edycja jest zablokowana; kolejne informacje zapisz podczas nowej wizyty.
+        </div>
+        <section class="card">
+            <h2>Podsumowanie</h2>
+            <p class="pre">{{ visit.summary }}</p>
+            <h2>Zalecenia</h2>
+            <p class="pre">{{ visit.recommendations|default:'Nie wpisano zaleceń.' }}</p>
+        </section>
+        <section class="card">
+            <h2>Zapis wywiadu i badania</h2>
+            <dl>
+                {% for field in clinical_fields %}
+                    <dt>{{ field.label }}</dt>
+                    <dd class="pre">
+                        {{ field.value|default_if_none:'Nie ustalono'|default:'Nie ustalono' }}
+                    </dd>
+                {% endfor %}
+                {% for field in symptom_fields %}
+                    <dt>{{ field.label }}</dt>
+                    <dd>
+                        {% if field.value == 'yes' %}
+                            Tak
+                        {% elif field.value == 'no' %}
+                            Nie
+                        {% else %}
+                            Nie ustalono
+                        {% endif %}
+                    </dd>
+                {% endfor %}
+            </dl>
+        </section>
+    {% else %}
+        <form method="post" id="visit-form">
+            {% csrf_token %}
+            {{ form.revision }}
+            {{ form.non_field_errors }}
+            <div class="visit-columns">
+                <div>
+                    <section class="card" id="interview-start" tabindex="-1">
+                        <h2>Przebieg wywiadu</h2>
+                        <p class="muted small">
+                            Wartości domyślne można zmieniać. „Nie podaje” oznacza brak informacji, a nie potwierdzony brak choroby. Domyślny wpis o szczepieniach wymaga weryfikacji.
+                        </p>
+                        <nav class="tabs" aria-label="Etapy wywiadu">
+                            {% for stage in stages %}
+                                <button type="button"
+                                        class="button outline"
+                                        data-stage-target="{{ forloop.counter0 }}">
+                                    {{ forloop.counter }}
+                                    .
+                                    {{ stage.title }}
+                                </button>
+                            {% endfor %}
+                        </nav>
+                        {% for stage in stages %}
+                            <section data-visit-stage="{{ forloop.counter0 }}">
+                                <h3>
+                                    {{ forloop.counter }}
+                                    .
+                                    {{ stage.title }}
+                                </h3>
+                                {% for field in stage.fields %}
+                                    <div class="field">
+                                        {{ field.label_tag }}
+                                        {{ field }}
+                                        {{ field.errors }}
+                                    </div>
+                                {% endfor %}
+                                <div class="actions">
+                                    {% if not forloop.first %}
+                                        <button type="button"
+                                                class="button outline"
+                                                data-stage-target="{{ forloop.counter0|add:'-1' }}">
+                                            ← Wstecz
+                                        </button>
+                                    {% endif %}
+                                    {% if not forloop.last %}
+                                        <button type="button"
+                                                class="button"
+                                                data-stage-target="{{ forloop.counter }}">
+                                            Dalej →
+                                        </button>
+                                    {% endif %}
+                                    <button class="button outline" name="action" value="save">Zapisz wywiad</button>
+                                </div>
+                            </section>
+                        {% endfor %}
+                        <p class="small muted">
+                            Zmiana etapu zachowuje wpisane dane na stronie. „Zapisz wywiad” zapisuje wszystkie trzy etapy.
+                        </p>
+                    </section>
+                    <section class="card" data-final-stage hidden>
+                        <p class="eyebrow">03 / DOKUMENTACJA LEKARZA</p>
+                        <h2>Podsumowanie i zalecenia</h2>
+                        <div class="field">
+                            {{ form.summary.label_tag }}
+                            {{ form.summary }}
+                            {{ form.summary.errors }}
+                        </div>
+                        <div class="field">
+                            {{ form.recommendations.label_tag }}
+                            {{ form.recommendations }}
+                            {{ form.recommendations.errors }}
+                        </div>
+                        <p class="muted small">
+                            Zakończenie wizyty zatwierdza treść i aktualizuje historię pacjenta. AI nie zatwierdza dokumentacji.
+                        </p>
+                        <div class="form-footer">
+                            <button class="button outline" name="action" value="save">Zapisz roboczo</button>
+                            <button class="button"
+                                    name="action"
+                                    value="complete"
+                                    data-confirm-button="Zatwierdzić i zakończyć wizytę? Dokumentacji nie będzie można edytować.">
+                                Zatwierdź i zakończ ✓
+                            </button>
+                        </div>
+                    </section>
+                </div>
+                <aside data-final-stage hidden>
+                    <section class="card ai-card">
+                        <span class="pill">✧ LOKALNE WSPARCIE AI</span>
+                        <h2>
+                            Druga para oczu.
+                            <br>
+                            Decyzja należy do Ciebie.
+                        </h2>
+                        <p class="muted">Najpierw zapisz formularz. Sprawdź dokładnie dane przekazywane do analizy.</p>
+                        <details>
+                            <summary>Podgląd danych dla AI</summary>
+                            <pre>{{ payload }}</pre>
+                        </details>
+                        <p class="small muted">
+                            Filtr usuwa znane identyfikatory, ale nie gwarantuje anonimowości tekstu. Sprawdź również opisowe szczegóły.
+                        </p>
+                        <div class="field checkbox-field">
+                            {{ form.privacy_checked }}
+                            {{ form.privacy_checked.label_tag }}
+                            {{ form.privacy_checked.errors }}
+                        </div>
+                        <p class="small muted">
+                            AI analizuje trzy etapy formularza. Propozycje obejmują podsumowanie i postępowanie niefarmakologiczne; automatyczny dobór leków jest wyłączony bez osobnego rozpoznania i oceny kwalifikacji.
+                        </p>
+                        <button class="button full"
+                                name="action"
+                                value="ai"
+                                data-busy="Analiza lokalna… może potrwać kilka minut">
+                            ✧ Przygotuj propozycję
+                        </button>
+                        <p class="small muted">
+                            Bez zatwierdzonych źródeł powstanie tylko podsumowanie. Awaria AI nie blokuje zapisu wizyty.
+                        </p>
+                    </section>
+                    {% if visit.ai_result %}
+                        <section class="card">
+                            <p class="eyebrow">02 / PROPOZYCJA DO WERYFIKACJI</p>
+                            <h3>Podsumowanie AI</h3>
+                            <p class="pre">{{ visit.ai_result.summary }}</p>
+    
+                            <h3>Propozycje zaleceń</h3>
+                            {% for item in visit.ai_result.recommendations %}
+                                <p>
+                                    {{ item.text }}
+                                    <small class="citation">
+                                        Fragmenty:
+                                        {{ item.sources|join:', ' }}
+                                    </small>
+                                </p>
+                            {% empty %}
+                                <p class="muted">Brak zaleceń opartych na dostępnych materiałach.</p>
+                            {% endfor %}
+                            {% if visit.ai_result.missing_information %}
+                                <div class="notice warning">
+                                    <strong>Braki i ograniczenia</strong>
+                                    <ul>
+                                        {% for item in visit.ai_result.missing_information %}
+                                            <li>{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                            {% for source in visit.ai_result.evidence %}
+                                <details>
+                                    <summary>
+                                        [
+                                        {{ source.id }}
+                                        ]
+                                        {{ source.title }}
+                                        · strona
+                                        {{ source.page }}
+                                    </summary>
+                                    <small>
+                                        {{ source.author }}
+                                        ·
+                                        {{ source.edition }}
+                                        · numer strony PDF
+                                    </small>
+                                    <p>{{ source.text }}</p>
+                                    {% if source.url %}
+                                        <a href="{{ source.url }}"
+                                           target="_blank"
+                                           rel="noopener noreferrer">Materiał źródłowy ↗</a>
+                                    {% endif %}
+                                </details>
+                            {% endfor %}
+                            <p class="small muted">
+                                Cytowanie nie gwarantuje poprawności. Sprawdź, czy fragment uzasadnia propozycję.
+                            </p>
+                            <button class="button outline full" name="action" value="accept_ai">
+                                Przenieś do pól do edycji
+                            </button>
+                            <small>
+                                Przeniesienie zastąpi obecne podsumowanie i zalecenia. Zatwierdzenie wizyty jest osobnym krokiem.
+                            </small>
+                        </section>
+                    {% endif %}
+                </aside>
+            </div>
+        </form>
+    {% endif %}
+{% endblock %}

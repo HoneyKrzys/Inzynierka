@@ -1,0 +1,84 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+    <section class="card">
+        <form class="filters">
+            <label>
+                Pacjent
+                <input name="q" value="{{ query }}" placeholder="Imię lub nazwisko">
+            </label>
+            <label>
+                Status
+                <select name="status">
+                    <option value="">Wszystkie</option>
+                    <option value="zakonczona" {% if status == 'zakonczona' %}selected{% endif %}>Zakończone</option>
+                <option value="odwolana" {% if status == 'odwolana' %}selected{% endif %}>Odwołane</option>
+                <option value="nieobecnosc" {% if status == 'nieobecnosc' %}selected{% endif %}>Nieobecność</option>
+            </select>
+        </label>
+        <label>
+            Od
+            <input type="date" name="from" value="{{ request.GET.from }}">
+        </label>
+        <label>
+            Do
+            <input type="date" name="to" value="{{ request.GET.to }}">
+        </label>
+        <button class="button outline">Filtruj</button>
+    </form>
+    <h2>Zakończone wizyty</h2>
+    {% for visit in visits %}
+        <a class="list-row" href="{% url 'visit' visit.pk %}">
+            <span>
+                <strong>{{ visit.patient }}</strong>
+                <small>
+                    {{ visit.created|date:'d.m.Y H:i' }}
+                    ·
+                    {% if visit.appointment_id %}
+                        Z rezerwacji
+                    {% else %}
+                        Bez rezerwacji
+                    {% endif %}
+                </small>
+            </span>
+            <span class="badge zakonczona">Zakończona →</span>
+        </a>
+    {% empty %}
+        <p class="empty">Brak wizyt spełniających kryteria.</p>
+    {% endfor %}
+    {% if visits.has_next %}
+        <a href="?q={{ query|urlencode }}&status={{ status }}&from={{ request.GET.from }}&to={{ request.GET.to }}&page={{ visits.next_page_number }}">
+            Starsze wizyty →
+        </a>
+    {% endif %}
+    {% if visits.has_previous %}
+        <a href="?q={{ query|urlencode }}&status={{ status }}&from={{ request.GET.from }}&to={{ request.GET.to }}&page={{ visits.previous_page_number }}">
+            ← Nowsze wizyty
+        </a>
+    {% endif %}
+    </section>
+    <section class="card">
+        <h2>Rezerwacje bez dokumentacji wizyty</h2>
+        {% for a in appointments %}
+            <div class="list-row">
+                <span>
+                    {{ a.name }}
+                    <small>{{ a.slot.starts|date:'d.m.Y H:i' }}</small>
+                    {% if a.status == 'zakonczona' %}<small>Zakończona bez wywiadu</small>{% endif %}
+                </span>
+                <span class="badge {{ a.status }}">{{ a.get_status_display }}</span>
+            </div>
+        {% empty %}
+            <p class="empty">Brak rezerwacji spełniających kryteria.</p>
+        {% endfor %}
+        {% if appointments.has_next %}
+            <a href="?q={{ query|urlencode }}&status={{ status }}&from={{ request.GET.from }}&to={{ request.GET.to }}&appointments_page={{ appointments.next_page_number }}">
+                Starsze rezerwacje →
+            </a>
+        {% endif %}
+        {% if appointments.has_previous %}
+            <a href="?q={{ query|urlencode }}&status={{ status }}&from={{ request.GET.from }}&to={{ request.GET.to }}&appointments_page={{ appointments.previous_page_number }}">
+                ← Nowsze rezerwacje
+            </a>
+        {% endif %}
+    </section>
+{% endblock %}

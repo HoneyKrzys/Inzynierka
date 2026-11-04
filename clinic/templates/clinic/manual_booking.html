@@ -1,0 +1,47 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+    <section class="card form-card">
+        <form method="post">
+            {% csrf_token %}
+            <div class="field">
+                <label for="slot">Termin *</label>
+                <select id="slot" name="slot" required>
+                    <option value="">Wybierz termin</option>
+                    {% for slot in slots %}
+                        <option value="{{ slot.pk }}">{{ slot }}</option>
+                    {% endfor %}
+                </select>
+                <small>
+                    Nie ma terminu?
+                    <a href="{% url 'availability' %}">Ustaw dostępność</a>
+                    .
+                </small>
+            </div>
+            <div class="field">
+                <label for="patient">Istniejący pacjent (opcjonalnie)</label>
+                <select data-autocomplete="patients" id="patient" name="patient">
+                    <option value="">Nowa osoba / powiązanie później</option>
+                    {% for patient in patients %}
+                        <option value="{{ patient.pk }}"
+                                data-birth_date="{{ patient.birth_date|date:'Y-m-d' }}"
+                                data-first_name="{{ patient.first_name }}"
+                                data-second_name="{{ patient.second_name }}"
+                                data-last_name="{{ patient.last_name }}"
+                                data-address="{{ patient.address }}"
+                                data-phone="{{ patient.phone }}"
+                                data-email="{{ patient.email }}">
+                            {{ patient }}
+                            ·
+                            {{ patient.birth_date|date:'d.m.Y' }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <small>
+                    Wpisz imię lub nazwisko i wybierz podpowiedź. Dla nowej osoby pozostaw to pole puste i uzupełnij dane poniżej.
+                </small>
+            </div>
+            {% include 'clinic/fields.html' %}
+            <button class="button">Zaplanuj wizytę →</button>
+        </form>
+    </section>
+{% endblock %}

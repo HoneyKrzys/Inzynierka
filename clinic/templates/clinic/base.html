@@ -1,0 +1,166 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pl">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="color-scheme" content="light">
+        <title>
+            {% block title %}
+                {{ title|default:'Medycyna jak dawniej' }}
+            {% endblock %}
+        </title>
+        <link rel="stylesheet"
+              href="{% static 'clinic/app.css' %}?v=second-name-4">
+        <script defer src="{% static 'clinic/app.js' %}?v=second-name-4"></script>
+    </head>
+    <body>
+        <a class="skip" href="#main">Przejdź do treści</a>
+        {% block shell %}
+            {% if public_layout %}
+<div class="public-shell">
+        <header class="public-header">
+            <a class="brand" href="{% url 'home' %}">
+                <span class="brand-icon">+</span>
+                Medycyna jak dawniej
+            </a>
+            <span class="public-specialty">PRYWATNA PRAKTYKA · CHOROBY WEWNĘTRZNE</span>
+            <a class="button outline"
+               href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'login' %}{% endif %}">
+                {% if user.is_authenticated %}
+                    Panel lekarza
+                {% else %}
+                    Logowanie lekarza
+                {% endif %}
+                ↗
+            </a>
+        </header>
+        <main id="main" class="public-main">
+            {% include 'clinic/messages.html' %}
+            {% block public_content %}{% endblock %}
+        </main>
+        <footer class="public-footer">
+            <span>Medycyna jak dawniej</span>
+            <span></span>
+        </footer>
+    </div>
+            {% else %}
+            <div class="app-shell">
+                <aside class="sidebar">
+                    <a href="{% url 'dashboard' %}" class="brand">
+                        <span class="brand-icon">+</span>
+                        Medycyna jak dawniej
+                    </a>
+                    <div class="sidebar-label">PRZESTRZEŃ LEKARZA</div>
+                    <nav aria-label="Menu główne">
+                        <a class="nav-link {% if nav == 'dashboard' %}active{% endif %}"
+                           href="{% url 'dashboard' %}">
+                            <span>▦</span>
+                            Harmonogram
+                        </a>
+                        <a class="nav-link {% if nav == 'visit' %}active{% endif %}"
+                           href="{% url 'visit_start' %}">
+                            <span>＋</span>
+                            Rozpocznij wywiad
+                        </a>
+                        <a class="nav-link {% if nav == 'patients' %}active{% endif %}"
+                           href="{% url 'patients' %}">
+                            <span>◎</span>
+                            Pacjenci
+                        </a>
+                        <div class="nav-divider"></div>
+                        <a class="nav-link {% if nav == 'documents' %}active{% endif %}"
+                           href="{% url 'documents' %}">
+                            <span>▤</span>
+                            Dokumenty
+                        </a>
+                        <button type="button"
+                                class="nav-link document-toggle"
+                                data-document-toggle
+                                aria-expanded="false"
+                                aria-controls="document-types">
+                            <span>＋</span>
+                            Wystaw dokument
+                        </button>
+                        <div id="document-types" class="document-types" hidden>
+                            <a class="nav-link"
+                               href="{% url 'document_new' %}?kind=zlecenie_leczenia">
+                                Zlecenie lekarskie
+                            </a>
+                            <a class="nav-link" href="{% url 'document_new' %}?kind=recepta">Recepta</a>
+                            <a class="nav-link" href="{% url 'document_new' %}?kind=skierowanie">Skierowanie</a>
+                            <a class="nav-link" href="{% url 'document_new' %}?kind=zalecenia">Zalecenia</a>
+                            <a class="nav-link" href="{% url 'document_new' %}?kind=zaswiadczenie">Zaświadczenie</a>
+                        </div>
+                        <a class="nav-link {% if nav == 'archive' %}active{% endif %}"
+                           href="{% url 'archive' %}">
+                            <span>◷</span>
+                            Archiwum wizyt
+                        </a>
+                        <a class="nav-link {% if nav == 'drugs' %}active{% endif %}"
+                           href="{% url 'drug_database' %}">
+                            <span>℞</span>
+                            Baza leków
+                        </a>
+                        <div class="nav-divider"></div>
+                        <a class="nav-link {% if nav == 'sources' %}active{% endif %}"
+                           href="{% url 'sources' %}">
+                            <span>✧</span>
+                            Baza wiedzy AI
+                        </a>
+                        <a class="nav-link {% if nav == 'agreements' %}active{% endif %}"
+                           href="{% url 'agreements' %}">
+                            <span>◇</span>
+                            Partnerzy i umowy
+                        </a>
+                        <a class="nav-link {% if nav == 'settings' %}active{% endif %}"
+                           href="{% url 'settings' %}">
+                            <span>⚙</span>
+                            Konto lekarza
+                        </a>
+                    </nav>
+                    <div class="sidebar-bottom">
+                        <span class="small-label">MEDYCYNA JAK DAWNIEJ</span>
+                        <a href="{% url 'home' %}">Strona pacjenta ↗</a>
+                    </div>
+                </aside>
+                <div class="workspace">
+                    <header class="topbar">
+                        <span class="breadcrumb">
+                            Medycyna jak dawniej /
+                            <strong>{{ title|default:'Panel lekarza' }}</strong>
+                        </span>
+                        <div class="user-menu">
+                            <span class="avatar">{{ user.first_name|default:user.username|first|upper }}</span>
+                            <span>
+                                {{ user.get_full_name|default:user.username }}
+                                <small>Lekarz · choroby wewnętrzne</small>
+                            </span>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button class="text-button">Wyloguj</button>
+                            </form>
+                        </div>
+                    </header>
+                    <main id="main" class="main">
+                        <header class="page-heading">
+                            <div>
+                                <p class="eyebrow">MEDYCYNA JAK DAWNIEJ / PANEL LEKARZA</p>
+                                <h1>{{ title }}</h1>
+                                <p class="muted">{{ subtitle }}</p>
+                            </div>
+                            {% block actions %}{% endblock %}
+                        </header>
+                        {% include 'clinic/messages.html' %}
+                        {% block content %}{% endblock %}
+                        <footer class="page-footer">
+                            Medycyna jak dawniej
+                            <span>Spokojna organizacja. Więcej uwagi dla pacjenta.</span>
+                        </footer>
+                    </main>
+                </div>
+            </div>
+            {% endif %}
+        {% endblock %}
+    </body>
+</html>

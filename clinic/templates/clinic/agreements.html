@@ -1,0 +1,31 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+    <section class="card">
+        <h2>Partnerzy gabinetu</h2>
+        {% for item in items %}
+            <div class="history-item">
+                <h3>{{ item.partner }}</h3>
+                <p>
+                    {{ item.number }}
+                    ·
+                    {{ item.get_kind_display }}
+                </p>
+                <span class="badge {% if item.active %}zakonczona{% else %}odwolana{% endif %}">
+                    {% if item.active %}
+                        Aktywna
+                    {% else %}
+                        Nieaktywna
+                    {% endif %}
+                </span>
+                <p>
+                    {{ item.valid_from|date:'d.m.Y' }}
+                    –
+                    {{ item.valid_to|date:'d.m.Y' }}
+                </p>
+                <p class="pre">{{ item.services }}</p>
+            </div>
+        {% empty %}
+            <p class="empty">Brak umów.</p>
+        {% endfor %}
+    </section>
+{% endblock %}

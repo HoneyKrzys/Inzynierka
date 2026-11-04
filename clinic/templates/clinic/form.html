@@ -1,0 +1,23 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+    <section class="card form-card">
+        <form method="post"{% if document_form %} id="document-form" data-kind="{{ document_kind }}"{% else %} enctype="multipart/form-data"{% endif %}>
+            {% csrf_token %}
+            {% include 'clinic/fields.html' %}
+            {% if document_kind == 'recepta' %}
+                <div id="drug-picker" data-url="{% url 'drug_suggestions' %}">
+                    <p id="drug-selected" role="status">{{ form.selected_label }}</p>
+                    <div id="drug-options"></div>
+                </div>
+            {% endif %}
+            <div class="form-footer">
+                <button class="button">{% if document_form %}Zapisz dokument{% else %}{{ button|default:'Zapisz' }}{% endif %} →</button>
+                {% if not document_form %}<a href="{% url 'dashboard' %}">Wróć do harmonogramu</a>{% endif %}
+            </div>
+        </form>
+    </section>
+    {% if document_form %}
+        {{ patient_data|json_script:"document-patients" }}
+        {{ facility_data|json_script:"document-facilities" }}
+    {% endif %}
+{% endblock %}

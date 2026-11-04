@@ -1,0 +1,94 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+    {% include 'clinic/attachments.html' with attachments=appointment.attachments.all %}
+    <section class="card form-card">
+        {% if appointment %}
+            <div class="notice">
+                Rezerwacja:
+                <strong>{{ appointment.name }}</strong>
+                ·
+                {{ appointment.slot }}
+                <br>
+                Przed powiązaniem sprawdź tożsamość pacjenta. Zbieżne imię i nazwisko nie wystarcza.
+            </div>
+        {% else %}
+            <p class="muted">Rozpoczęcie wywiadu utworzy wizytę bez wcześniejszej rezerwacji.</p>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="field">
+                <label for="patient">Pacjent *</label>
+                <select data-autocomplete="patients" id="patient" name="patient" required>
+                    <option value="">Wybierz pacjenta</option>
+                    {% for p in patients %}
+                        <option value="{{ p.pk }}"
+                                {% if p.pk|stringformat:'s' == selected %}selected{% endif %}>
+                            {{ p }}
+                            ·
+                            {{ p.birth_date|date:'d.m.Y' }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <small>
+                    Przy powtarzającym się imieniu i nazwisku: od najmłodszej osoby do najstarszej. Przed rozpoczęciem potwierdź datę urodzenia.
+                </small>
+                {% if not patients %}
+                    <p role="status">Nie znaleziono pacjentów. Dodaj nowego pacjenta.</p>
+                {% endif %}
+            </div>
+            {% if drafts %}
+                <div class="notice warning" role="alert">
+                    <strong>Poprzedni wywiad nie został zatwierdzony.</strong>
+                    {% for draft in drafts %}
+                        <p>
+                            {{ draft.patient }}
+                            ·
+                            {{ draft.created|date:'d.m.Y H:i' }}
+                            —
+                            <a href="{% url 'visit' draft.pk %}">Wróć do wywiadu</a>
+                        </p>
+                    {% endfor %}
+                    {% if previous %}
+                        <p>
+                            Przycisk zatwierdzi ostatnio zapisane dane wywiadu pacjenta
+                            {{ previous.patient }}
+                            .
+                            {% if drafts|length > 1 %}
+                                Pozostały
+                                {{ drafts|length }}
+                                wcześniejsze wywiady. Zatwierdź je kolejno; po ostatnim otworzy się wywiad wybranego poniżej pacjenta.
+                            {% else %}
+                                Następnie otworzy się wywiad wybranego pacjenta.
+                            {% endif %}
+                            Niezapisane zmiany z innej karty nie zostaną uwzględnione. Puste pola pozostaną puste.
+                        </p>
+                        <details>
+                            <summary>Sprawdź zapisane podsumowanie i zalecenia</summary>
+                            <h4>Podsumowanie</h4>
+                            <p class="pre">{{ previous.summary|default:'Nie wpisano podsumowania.' }}</p>
+                            <h4>Zalecenia</h4>
+                            <p class="pre">{{ previous.recommendations|default:'Nie wpisano zaleceń.' }}</p>
+                        </details>
+                        <input type="hidden"
+                               name="previous_revision"
+                               value="{{ previous.revision }}">
+                        <button class="button" name="finish_previous" value="{{ previous.pk }}">
+                            Zakończ poprzedni wywiad
+                        </button>
+                    {% else %}
+                        <p>
+                            Te wywiady powstały przed wprowadzeniem ograniczenia. Zakończ je poprzez powyższe odnośniki. Nowy wywiad pozostaje zablokowany.
+                        </p>
+                    {% endif %}
+                </div>
+            {% endif %}
+            <div class="form-footer">
+                {% if not drafts %}
+                    <button class="button">Rozpocznij wywiad →</button>
+                {% endif %}
+                <a href="{% url 'patient_new' %}" target="_blank" rel="noopener">Dodaj nowego pacjenta ↗</a>
+            </div>
+            <p class="muted small">Po dodaniu pacjenta w nowej karcie odśwież tę stronę.</p>
+        </form>
+    </section>
+{% endblock %}

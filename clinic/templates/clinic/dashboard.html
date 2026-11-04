@@ -1,0 +1,204 @@
+{% extends 'clinic/base.html' %}
+{% block actions %}
+    <div class="actions">
+        <a class="button outline" href="{% url 'availability' %}">Ustaw dostępność</a>
+        <a class="button" href="{% url 'manual_booking' %}">＋ Dodaj wizytę</a>
+    </div>
+{% endblock %}
+{% block content %}
+    <div class="stats">
+        <div class="stat">
+            <span>WIZYTY W WYBRANYM DNIU</span>
+            <strong>{{ count|stringformat:'02d' }}</strong>
+            <small>Zaplanowana opieka</small>
+        </div>
+        <div class="stat">
+            <span>ZAKOŃCZONE WIZYTY</span>
+            <strong>{{ completed|stringformat:'02d' }}</strong>
+            <small>Zakończone wizyty i rezerwacje</small>
+        </div>
+        <div class="stat">
+            <span>PACJENCI W KARTOTECE</span>
+            <strong>{{ patients_count|stringformat:'02d' }}</strong>
+            <small>Historia w jednym miejscu</small>
+        </div>
+        <div class="stat accent">
+            <span>BEZ WCZEŚNIEJSZEGO TERMINU?</span>
+            <h3>
+                Przyjmij pacjenta
+                <br>
+                od razu.
+            </h3>
+            <a href="{% url 'visit_start' %}">Rozpocznij wywiad ↗</a>
+        </div>
+    </div>
+    <section class="card">
+        <div class="section-heading">
+            <div>
+                <h2>Plan dnia</h2>
+                <p class="muted">{{ day|date:'l, j F Y' }}</p>
+            </div>
+            <form class="filters">
+                <input aria-label="Dzień harmonogramu"
+                       type="date"
+                       name="day"
+                       value="{{ day|date:'Y-m-d' }}">
+                <button class="button outline">Pokaż</button>
+            </form>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Godzina</th>
+                        <th>Pacjent</th>
+                        <th>Historia</th>
+                        <th>Status</th>
+                        <th>Działanie</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in appointments %}
+                        <tr>
+                            <td>
+                                <strong>{{ a.slot.starts|date:'H:i' }}</strong>
+                                <small>
+                                    do
+                                    {{ a.slot.ends|date:'H:i' }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if a.patient %}
+                                    <a href="{% url 'patient' a.patient_id %}">{{ a.patient }}</a>
+                                {% else %}
+                                    {{ a.name }}
+                                {% endif %}
+                                <small>{{ a.phone }}</small>
+                                {% for attachment in a.attachments.all %}
+                                    <small>
+                                        <a href="{% url 'attachment_download' attachment.pk %}">
+                                            ↓
+                                            {{ attachment.name }}
+                                        </a>
+                                    </small>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% if a.returning %}
+                                    Kolejna wizyta
+                                {% elif a.patient %}
+                                    Pierwsza wizyta
+                                {% else %}
+                                    <span class="muted">Do weryfikacji</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {{ a.status }}">{{ a.get_status_display }}</span>
+                            </td>
+                            <td>
+                                <div class="row-actions">
+                                    {% if a.status == 'zaplanowana' or a.status == 'w_trakcie' %}
+                                        <form method="post"
+                                              action="{% url 'appointment_begin' a.pk %}">
+                                            {% csrf_token %}
+                                            <button class="button small-button">
+                                                {% if a.status == 'w_trakcie' %}
+                                                    Kontynuuj
+                                                {% else %}
+                                                    Rozpocznij
+                                                {% endif %}
+                                                →
+                                            </button>
+                                        </form>
+                                    {% elif a.status == 'zakonczona' %}
+                                        {% if a.visit %}
+                                            <a href="{% url 'visit' a.visit.pk %}">Otwórz →</a>
+                                        {% else %}
+                                            <span class="muted">Bez wywiadu</span>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% if a.status == 'zaplanowana' or a.status == 'w_trakcie' %}
+                                        <details class="menu">
+                                            <summary>Więcej</summary>
+                                            <form method="post"
+                                                  action="{% url 'appointment_status' a.pk %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="revision" value="{{ a.visit.revision }}">
+                                                <button name="status"
+                                                        value="zakonczona"
+                                                        class="text-button"
+                                                        data-confirm-button="Zakończyć wizytę? Jeśli ma wywiad, zatwierdzisz jego ostatnio zapisane dane. Niezapisane zmiany z innych kart nie zostaną uwzględnione.">Zakończ</button>
+                                                {% if a.status == 'zaplanowana' %}
+                                                <button name="status"
+                                                        value="odwolana"
+                                                        data-confirm-button="Odwołać rezerwację?"
+                                                        class="text-button danger">Odwołaj</button>
+                                                <button name="status"
+                                                        value="nieobecnosc"
+                                                        data-confirm-button="Oznaczyć nieobecność pacjenta?"
+                                                        class="text-button">Nieobecność</button>
+                                                {% endif %}
+                                            </form>
+                                        </details>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty">
+                                    <span class="empty-icon">▦</span>
+                                    <h3>Brak rezerwacji na ten dzień</h3>
+                                    <p>Dodaj rezerwację lub udostępnij terminy pacjentom.</p>
+                                    <a href="{% url 'availability' %}">Ustaw dostępność →</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if walkins %}
+            <h3>Wizyty bez rezerwacji</h3>
+            <div class="list">
+                {% for visit in walkins %}
+                    <a class="list-row" href="{% url 'visit' visit.pk %}">
+                        <span>{{ visit.patient }}<small>{{ visit.created|date:'H:i' }}</small></span>
+                        <span class="badge {{ visit.status }}">{{ visit.get_status_display }} →</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </section>
+    <section class="card">
+        <h2>Nadchodzące rezerwacje</h2>
+        <p class="muted">Widoczne są tylko przyszłe, zaplanowane rezerwacje. Wybierz dzień, aby otworzyć plan.</p>
+        <div class="tabs">
+            {% for item in appointment_days %}
+                <a href="?day={{ item.day|date:'Y-m-d' }}">
+                    {{ item.day|date:'d.m.Y' }} · {{ item.total }} rezerwacji
+                </a>
+            {% empty %}
+                <p>Brak przyszłych rezerwacji.</p>
+            {% endfor %}
+        </div>
+        <a href="{% url 'archive' %}">Zobacz archiwum zakończonych wizyt →</a>
+    </section>
+    {% if drafts %}
+        <section class="card">
+            <h2>Otwarte wywiady</h2>
+            <div class="list">
+                {% for visit in drafts %}
+                    <a class="list-row" href="{% url 'visit' visit.pk %}">
+                        <span>
+                            {{ visit.patient }}
+                            <small>{{ visit.created|date:'d.m.Y H:i' }}</small>
+                        </span>
+                        <span>Kontynuuj →</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+{% endblock %}

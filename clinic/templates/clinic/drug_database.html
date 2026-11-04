@@ -1,0 +1,74 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+    <div class="notice">
+        Źródło:
+        <a href="https://rejestry.ezdrowie.gov.pl/registry/rpl"
+           target="_blank"
+           rel="noopener">Rejestr Produktów Leczniczych</a>
+        . Stan danych:
+        {{ source_date|date:'d.m.Y' }}
+        . Preparaty:
+        {{ total }}
+        . Wpis w rejestrze nie potwierdza dostępności w aptece. Moc preparatu nie oznacza dawkowania.
+    </div>
+    <section class="card">
+        <form class="filters search-form" method="get">
+            <input name="q"
+                   aria-label="Wyszukaj lek"
+                   placeholder="Nazwa preparatu, substancja czynna lub GTIN…"
+                   value="{{ query }}">
+            <button class="button outline">Szukaj</button>
+            {% if query %}
+                <a href="{% url 'drug_database' %}">Wyczyść</a>
+            {% endif %}
+        </form>
+        <p class="muted">
+            Znaleziono:
+            {{ items.paginator.count }}
+        </p>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nazwa preparatu</th>
+                        <th>Postać</th>
+                        <th>Moc / dawka preparatu</th>
+                        <th>Opakowania</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drug in items %}
+                        <tr>
+                            <td>
+                                <strong>{{ drug.name }}</strong>
+                                <small>{{ drug.substance }}</small>
+                            </td>
+                            <td>{{ drug.form|default:'Nie podano' }}</td>
+                            <td>{{ drug.strength|default:'Nie podano' }}</td>
+                            <td>
+                                {% for pack in drug.packages.all %}
+                                    <div>
+                                        {{ pack.description }}
+                                        <small>
+                                            GTIN:
+                                            {{ pack.gtin|default:'brak' }}
+                                            ·
+                                            {{ pack.availability }}
+                                        </small>
+                                    </div>
+                                {% empty %}
+                                    Brak nieskasowanych opakowań w wykazie.
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">Nie znaleziono preparatów.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'clinic/pagination.html' %}
+    </section>
+{% endblock %}

@@ -1,1 +1,7 @@
 Django>=5.2,<5.3
+ollama>=0.6,<0.7
+pydantic>=2,<3
+pypdf>=6,<7
+python-dotenv>=1,<2
+reportlab>=4,<6
+psycopg[binary]>=3.3,<4

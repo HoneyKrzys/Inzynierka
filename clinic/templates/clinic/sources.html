@@ -1,0 +1,52 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+    <div class="notice">
+        Zalecenia AI wymagają zatwierdzonych materiałów. Cytowania ułatwiają kontrolę, ale nie gwarantują poprawności medycznej.
+    </div>
+    <div class="split">
+        <section class="card">
+            <h2>Dodaj materiał</h2>
+            <p class="muted">
+                Tekstowy PDF lub TXT UTF-8. Import wymaga działającego lokalnego modelu embeddingów.
+            </p>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% include 'clinic/fields.html' %}
+                <button class="button" data-busy="Odczytywanie i indeksowanie materiału…">
+                    Importuj materiał →
+                </button>
+            </form>
+        </section>
+        <section class="card">
+            <h2>Twoja biblioteka</h2>
+            {% for item in items %}
+                <a class="list-row" href="{% url 'source' item.pk %}">
+                    <span>
+                        <strong>{{ item.title }}</strong>
+                        <small>
+                            {{ item.author }}
+                            ·
+                            {{ item.edition }}
+                        </small>
+                        <small>{{ item.get_clinical_scope_display }}</small>
+                    </span>
+                    <span class="badge {% if item.approved and not item.czy_pomocniczy %}zakonczona{% else %}zaplanowana{% endif %}">
+                        {% if item.czy_pomocniczy %}
+                            Pomocniczy
+                        {% elif item.approved %}
+                            Zatwierdzone
+                        {% else %}
+                            Do sprawdzenia
+                        {% endif %}
+                    </span>
+                </a>
+            {% empty %}
+                <div class="empty">
+                    <span class="empty-icon">✧</span>
+                    <h3>Zacznij od swoich źródeł</h3>
+                    <p>Dodaj rozdział książki lub skrypt, do którego wykorzystania masz uprawnienia.</p>
+                </div>
+            {% endfor %}
+        </section>
+    </div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'clinic/base.html' %}
+{% block actions %}
+    <a class="button" href="{% url 'document_pdf' document.pk %}">Pobierz PDF ↓</a>
+{% endblock %}
+{% block content %}
+    <section class="card paper">
+        <p class="eyebrow">MEDYCYNA JAK DAWNIEJ</p>
+        <h2>{{ document.title }}</h2>
+        <div class="document-meta">
+            <div>
+                <small>Pacjent</small>
+                <strong>{{ document.snapshot.patient }}</strong>
+                <p>
+                    Data urodzenia:
+                    {{ document.snapshot.birth_date }}
+                    <br>
+                    PESEL:
+                    {{ document.snapshot.pesel|default:"Nie zapisano przy wystawieniu" }}
+                    <br>
+                    Adres zamieszkania:
+                    {{ document.snapshot.address|default:"Nie zapisano przy wystawieniu" }}
+                </p>
+            </div>
+            <div>
+                <small>Lekarz</small>
+                <strong>{{ document.snapshot.doctor }}</strong>
+                <p>{{ document.created|date:'d.m.Y H:i' }}</p>
+            </div>
+        </div>
+        <hr>
+        <h3>Treść dokumentu</h3>
+        <p class="pre">{{ document.content }}</p>
+        {% if document.reason %}
+            <h3>Uzasadnienie / kontekst</h3>
+            <p class="pre">{{ document.reason }}</p>
+        {% endif %}
+        {% if document.snapshot.agreement %}
+            <div class="notice">
+                <strong>Finansowanie</strong>
+                <p>
+                    {{ document.snapshot.agreement }}
+                </p>
+                <p>{{ document.snapshot.scope }}</p>
+            </div>
+        {% endif %}
+        <p class="muted small">
+            Zapis zawiera dane z chwili wystawienia. Zmiana karty pacjenta nie zmienia tego dokumentu.
+        </p>
+        <a href="{% url 'patient' document.patient_id %}">Przejdź do karty pacjenta →</a>
+    </section>
+{% endblock %}

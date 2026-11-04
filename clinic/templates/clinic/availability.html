@@ -1,0 +1,50 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+    <div class="split">
+        <section class="card">
+            <h2>Udostępnij godziny</h2>
+            <p class="muted">Wybierz dzień i przedział przyjęć. Nakładające się terminy zostaną pominięte.</p>
+            <form method="post">
+                {% csrf_token %}
+                {% include 'clinic/fields.html' %}
+                <button class="button">Dodaj wolne terminy</button>
+            </form>
+        </section>
+        <section class="card">
+            <h2>Nadchodzące terminy</h2>
+            <p class="muted small">Do 120 najbliższych godzin. Ukryj wolny termin, aby oznaczyć przerwę.</p>
+            <div class="list">
+                {% for slot in slots %}
+                    <div class="list-row">
+                        <span>
+                            <strong>{{ slot.starts|date:'d.m.Y · H:i' }}</strong>
+                            <small>
+                                {% if slot.occupied %}
+                                    Zarezerwowany
+                                {% elif slot.published %}
+                                    Dostępny dla pacjentów
+                                {% else %}
+                                    Ukryty / przerwa
+                                {% endif %}
+                            </small>
+                        </span>
+                        {% if not slot.occupied %}
+                            <form method="post" action="{% url 'slot_hide' slot.pk %}">
+                                {% csrf_token %}
+                                <button class="text-button">
+                                    {% if slot.published %}
+                                        Ukryj
+                                    {% else %}
+                                        Udostępnij
+                                    {% endif %}
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <p class="empty">Nie opublikowano terminów.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+{% endblock %}

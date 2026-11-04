@@ -1,0 +1,38 @@
+from django.urls import path
+from django.contrib.auth.views import LogoutView
+from . import views as v
+
+urlpatterns = [
+    path("panel/leki/podpowiedzi/", v.podpowiedzi_lekow, name="drug_suggestions"),
+    path("panel/leki/", v.baza_lekow, name="drug_database"),
+    path("panel/wyniki-badan/<int:pk>/", v.pobierz_wynik_badania, name="patient_result_download"),
+    path("panel/rezerwacja/<int:pk>/rozpocznij/", v.rozpocznij_rezerwacje, name="appointment_begin"),
+    path("panel/zalaczniki/<int:pk>/", v.pobierz_zalacznik, name="attachment_download"),
+    path("", v.strona_glowna, name="home"),
+    path("rezerwacja/<int:pk>/", v.rezerwuj, name="booking"),
+    path("rezerwacja/potwierdzenie/<uuid:token>/", v.potwierdzenie_rezerwacji, name="booking_confirmation"),
+    path("logowanie/", v.LogowanieLekarza.as_view(), name="login"),
+    path("wylogowanie/", LogoutView.as_view(), name="logout"),
+    path("panel/", v.panel_lekarza, name="dashboard"),
+    path("panel/dostepnosc/", v.dostepnosc, name="availability"),
+    path("panel/termin/<int:pk>/ukryj/", v.ukryj_termin, name="slot_hide"),
+    path("panel/rezerwacja/nowa/", v.rezerwacja_w_gabinecie, name="manual_booking"),
+    path("panel/rezerwacja/<int:pk>/status/", v.status_rezerwacji, name="appointment_status"),
+    path("panel/pacjenci/", v.pacjenci, name="patients"),
+    path("panel/pacjenci/nowy/", v.edytuj_pacjenta, name="patient_new"),
+    path("panel/pacjenci/<int:pk>/", v.karta_pacjenta, name="patient"),
+    path("panel/pacjenci/<int:pk>/edycja/", v.edytuj_pacjenta, name="patient_edit"),
+    path("panel/wywiad/", v.nowa_wizyta, name="visit_start"),
+    path("panel/wizyty/<int:pk>/", v.edytuj_wizyte, name="visit"),
+    path("panel/wizyty/<int:pk>/pdf/", v.pobierz_wizyte_pdf, name="visit_pdf"),
+    path("panel/archiwum/", v.archiwum, name="archive"),
+    path("panel/dokumenty/", v.dokumenty, name="documents"),
+    path("panel/dokumenty/nowy/", v.wystaw_dokument, name="document_new"),
+    path("panel/dokumenty/<int:pk>/", v.szczegoly_dokumentu, name="document"),
+    path("panel/dokumenty/<int:pk>/pdf/", v.pobierz_dokument_pdf, name="document_pdf"),
+    path("panel/umowy/", v.umowy, name="agreements"),
+    path("panel/materialy/", v.materialy, name="sources"),
+    path("panel/materialy/<int:pk>/", v.szczegoly_materialu, name="source"),
+    path("panel/konto/", v.ustawienia_konta, name="settings"),
+    path("panel/konto/haslo/", v.ZmianaHasla.as_view(), name="password_change"),
+]

@@ -1,0 +1,41 @@
+{% extends 'clinic/base.html' %}
+{% block content %}
+    <div class="split">
+        <section class="card">
+            <h2>Twój profil</h2>
+            <dl>
+                <dt>Imię</dt>
+                <dd>
+                    {{ user.first_name|default:'Nie podano' }}
+                </dd>
+                <dt>Nazwisko</dt>
+                <dd>
+                    {{ user.last_name|default:'Nie podano' }}
+                </dd>
+                <dt>Login</dt>
+                <dd>
+                    {{ user.username }}
+                </dd>
+            </dl>
+            <hr>
+            <a href="{% url 'password_change' %}">Zmień hasło →</a>
+        </section>
+        <section class="card">
+            <h2>Ostatnie działania</h2>
+            {% for event in events %}
+                <div class="list-row">
+                    <span>
+                        {{ event.action }}
+                        <small>{{ event.created|date:'d.m.Y H:i' }}</small>
+                    </span>
+                    <small>
+                        #
+                        {{ event.object_id }}
+                    </small>
+                </div>
+            {% empty %}
+                <p class="empty">Brak działań.</p>
+            {% endfor %}
+        </section>
+    </div>
+{% endblock %}

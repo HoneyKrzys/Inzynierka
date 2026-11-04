@@ -1,0 +1,15 @@
+{% if items.has_other_pages %}
+    <nav class="pagination" aria-label="Strony">
+        {% if items.has_previous %}
+            <a href="?q={{ query|urlencode }}&page={{ items.previous_page_number }}">← Poprzednia</a>
+        {% endif %}
+        <span>
+            {{ items.number }}
+            /
+            {{ items.paginator.num_pages }}
+        </span>
+        {% if items.has_next %}
+            <a href="?q={{ query|urlencode }}&page={{ items.next_page_number }}">Następna →</a>
+        {% endif %}
+    </nav>
+{% endif %}
